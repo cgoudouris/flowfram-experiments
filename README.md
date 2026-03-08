@@ -105,16 +105,81 @@ After running, each experiment folder will contain:
 
 ---
 
-## 📊 Key Metrics Verified
+## 📊 Metrics Verified
 
-| Metric | Formula | Description |
-|--------|---------|-------------|
-| **REI** | $REI = \sum_{k=1}^{n} w_k \cdot F_k$ | Resonance Entropy Index |
-| **CV** | $CV = \frac{\sigma}{\mu}$ | Coefficient of Variation |
-| **SEI** | $H = -\sum p_i \log_2 p_i$ | Shannon Entropy Index |
-| **VPI** | $VPI = \frac{\sum \|r_{ij}\| \cdot w_{ij}}{n}$ | Variability Propagation Index |
-| **ITD** | $ITD = \frac{-\sum p_s \log_2 p_s}{\log_2 \|S\|}$ | Dialogical Tension Index |
-| **Resonance** | $Score_{ij} = r_{ij} \times (0.5 + 0.5 \times NMI_{ij})$ | Combined resonance score |
+All 22 FlowFRAM metric types are independently recomputed and verified by this package. Metrics are organized by category:
+
+### Core Metrics
+
+| # | Metric | Formula | XLSX Sheet | Description |
+|---|--------|---------|------------|-------------|
+| 1 | **REI** | $REI = \sum_{k=1}^{n} w_k \cdot F_k$ | REI Calculation | Resonance Entropy Index — weighted sum of complexity factors |
+| 2 | **REI Static/Dynamic** | $REI_s = \sum_{static} w_k F_k$ | REI Calculation | Breakdown into static vs dynamic factor contributions |
+| 3 | **Factor Contributions** | $\%_k = \frac{w_k F_k}{REI}$ | REI Calculation | Per-factor percentage of total REI |
+| 4 | **REI Convergence** | $\Delta REI_t = REI_t - REI_{t-1}$ | *(history in Metadata)* | Iteration-over-iteration stability of REI |
+
+### Variability Metrics
+
+| # | Metric | Formula | XLSX Sheet | Description |
+|---|--------|---------|------------|-------------|
+| 5 | **CV** | $CV = \frac{\sigma}{\mu}$ | Function Statistics | Coefficient of Variation per function |
+| 6 | **CV%** | $CV\% = CV \times 100$ | Function Statistics | Percentage form with cross-validation |
+| 7 | **CRI** | $CRI_i = \frac{CV_i}{\sum CV}$ | CRI Ranking | Criticality Ranking Index — normalized CV contribution |
+| 8 | **Precision Phenotype** | Threshold-based classification | Function Statistics | Function variability classification (low/medium/high) |
+
+### Entropy Metrics
+
+| # | Metric | Formula | XLSX Sheet | Description |
+|---|--------|---------|------------|-------------|
+| 9 | **SEI (H_aspect)** | $H = -\sum p_i \log_2 p_i$ | Entropy Analysis | Shannon Entropy Index over aspect distribution |
+| 10 | **H_norm** | $H_{norm} = \frac{H}{H_{max}}$ | Entropy Analysis | Normalized entropy (0 = uniform, 1 = max disorder) |
+| 11 | **ES 2.0** | Bellman-Picard convergence | ES 2.0 | Entropy Synchronization — network amplification factor |
+| 12 | **Entropy Rate** | $\dot{H}_i = CV_t - CV_{t-1}$ | Entropy Rate | Per-function convergence trend |
+
+### Resonance Metrics
+
+| # | Metric | Formula | XLSX Sheet | Description |
+|---|--------|---------|------------|-------------|
+| 13 | **Combined Score** | $S_{ij} = r_{ij} \times (0.5 + 0.5 \times NMI_{ij})$ | Resonance Analysis | Pearson × NMI resonance detection |
+| 14 | **VPI** | $VPI = \frac{\sum \|S_{ij}\|}{n}$ | Resonance Analysis | Variability Propagation Index |
+| 15 | **Chain Strength** | $\Pi \|r_i\|$ | Chains & Barriers | Product of absolute correlations along chain |
+| 16 | **Barrier Damping** | $D = 1 - \frac{\|r_{out}\|}{\|r_{in}\|}$ | Chains & Barriers | Barrier effectiveness ratio |
+
+### Causal Metrics
+
+| # | Metric | Formula | XLSX Sheet | Description |
+|---|--------|---------|------------|-------------|
+| 17 | **Transfer Entropy** | $TE_{X \to Y}$ per coupling | Transfer Entropy | Causal information flow per coupling |
+| 18 | **Net TE** | $TE_{net} = TE_{fwd} - TE_{rev}$ | Transfer Entropy | Net causal direction |
+| 19 | **TE Summary** | Confirmed / Reversed / Symmetric counts | Transfer Entropy | System-level causal classification |
+
+### Epistemological Metrics
+
+| # | Metric | Formula | XLSX Sheet | Description |
+|---|--------|---------|------------|-------------|
+| 20 | **REI Non-Linear** | $REI_{NL} = REI_{lin} + \sum F_i \times F_j$ | REI Non-Linear | Non-linear REI with interaction terms (FOV×FRC, FOV×ES, FRC×ES) |
+| 21 | **ITD** | $ITD = \frac{-\sum p_s \log_2 p_s}{\log_2 \|S\|}$ | ITD Analysis | Dialogical Tension Index (Morin dialogic principle) |
+| 22 | **Descriptive Stats** | mean, std, min, max, percentiles | Variable Statistics | Full distribution statistics per variable |
+
+### XLSX Sheets Summary
+
+Each scenario spreadsheet contains up to **13 sheets**:
+
+| Sheet | Content | Formulas |
+|-------|---------|----------|
+| Metadata | Experiment info, REI status | — |
+| Function Statistics | Per-function μ, σ, CV, phenotype | CV = σ/μ |
+| REI Calculation | Factor decomposition, static/dynamic split | REI = ΣwF, cross-check |
+| Resonance Analysis | All detections with r, NMI | CombinedScore, VPI |
+| Entropy Analysis | Aspect distribution, Shannon entropy | H = -Σp·log₂p |
+| Chains & Barriers | Resonance chains, barrier functions | Strength = Π\|r\|, Damping |
+| ITD Analysis | Per-function ITD with NORM.DIST | ITD_norm formula |
+| CRI Ranking | Functions ranked by CV contribution | NormScore, cumulative |
+| ES 2.0 | Bellman-Picard convergence data | Amplification analysis |
+| REI Non-Linear | Factor interactions (FOV×FRC, etc.) | NL-REI = linear + interactions |
+| Entropy Rate | Per-function CV convergence trends | Rate, trend classification |
+| Transfer Entropy | Per-coupling causal TE analysis | Net TE, direction formulas |
+| Variable Statistics | Full descriptive stats per variable | CV, Range formulas |
 
 ---
 

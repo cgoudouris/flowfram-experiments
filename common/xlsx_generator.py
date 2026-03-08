@@ -722,12 +722,520 @@ def _build_itd_sheet(wb: Workbook, cm: ComplexityMetricsExport):
     _style_result_cell(ws, row + 1, 8)
 
 
+def _build_cri_sheet(wb: Workbook, cm: ComplexityMetricsExport):
+    """
+    Sheet 8: CRI — Criticality Ranking Index.
+
+    Ranks functions by normalised CV contribution.
+    DATA: Function ID, CV, Mean
+    FORMULA: NormScore = CV_i / SUM(CV), CumulativeRank
+    """
+    ws = wb.create_sheet("CRI Ranking")
+
+    headers = [
+        "Rank", "Function ID", "CV", "Mean (μ)",
+        "Norm Score (formula)", "Cum. Score (formula)", "Percentile (formula)",
+    ]
+    ws.column_dimensions["A"].width = 8
+    ws.column_dimensions["B"].width = 28
+    for c in range(3, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(c)].width = 18
+
+    for col, h in enumerate(headers, start=1):
+        ws.cell(row=1, column=col, value=h)
+    _style_header_row(ws, 1, len(headers))
+
+    # Sort by CV descending
+    sorted_fvs = sorted(cm.function_variabilities, key=lambda fv: fv.cv, reverse=True)
+
+    row = 2
+    first, last = row, row + len(sorted_fvs) - 1
+    for i, fv in enumerate(sorted_fvs):
+        ws.cell(row=row, column=1, value=i + 1)                  # Rank
+        ws.cell(row=row, column=2, value=fv.function_id)         # Function
+        ws.cell(row=row, column=3, value=fv.cv)                  # CV (DATA)
+        ws.cell(row=row, column=4, value=fv.mean)                # Mean (DATA)
+
+        # FORMULA: NormScore = CV_i / SUM(all CVs)
+        ws.cell(row=row, column=5,
+                value=f"=IF(SUM(C${first}:C${last})=0,0,C{row}/SUM(C${first}:C${last}))")
+        _style_data_cell(ws, row, 5, is_formula=True)
+
+        # FORMULA: Cumulative score
+        if row == first:
+            ws.cell(row=row, column=6, value=f"=E{row}")
+        else:
+            ws.cell(row=row, column=6, value=f"=F{row-1}+E{row}")
+        _style_data_cell(ws, row, 6, is_formula=True)
+
+        # FORMULA: Percentile (rank / N)
+        ws.cell(row=row, column=7,
+                value=f"=A{row}/{last - first + 1}")
+        ws.cell(row=row, column=7).number_format = NUMBER_FMT_PCT
+        _style_data_cell(ws, row, 7, is_formula=True)
+
+        for col in [1, 2, 3, 4]:
+            _style_data_cell(ws, row, col)
+
+        row += 1
+
+    # Summary
+    if sorted_fvs:
+        ws.cell(row=row + 1, column=2, value="Top Contributor")
+        ws.cell(row=row + 1, column=2).font = Font(bold=True)
+        ws.cell(row=row + 1, column=3, value=f"=B{first}")
+        _style_result_cell(ws, row + 1, 3)
+
+        ws.cell(row=row + 2, column=2, value="Top CV")
+        ws.cell(row=row + 2, column=3, value=f"=C{first}")
+        _style_result_cell(ws, row + 2, 3)
+
+        ws.cell(row=row + 3, column=2, value="Bottom CV")
+        ws.cell(row=row + 3, column=3, value=f"=C{last}")
+        _style_result_cell(ws, row + 3, 3)
+
+        # Gini-like concentration: top 20% share
+        top20_count = max(1, len(sorted_fvs) // 5)
+        top20_last = first + top20_count - 1
+        ws.cell(row=row + 4, column=2, value="Top 20% CV Share")
+        ws.cell(row=row + 4, column=3,
+                value=f"=IF(SUM(C${first}:C${last})=0,0,SUM(C${first}:C${top20_last})/SUM(C${first}:C${last}))")
+        ws.cell(row=row + 4, column=3).number_format = NUMBER_FMT_PCT
+        _style_data_cell(ws, row + 4, 3, is_formula=True)
+        _style_result_cell(ws, row + 4, 3)
+
+
+def _build_entropy_sync_sheet(wb: Workbook, cm: ComplexityMetricsExport):
+    """
+    Sheet 9: Entropy Synchronization 2.0 (ES 2.0).
+
+    Displays Bellman-Picard convergence data and amplification factor.
+    DATA: Direct from cm.entropy_synchronization dict.
+    """
+    ws = wb.create_sheet("ES 2.0")
+
+    ws.cell(row=1, column=1, value="Entropy Synchronization 2.0 — Bellman-Picard Convergence")
+    _style_subheader_row(ws, 1, 4)
+
+    ws.column_dimensions["A"].width = 32
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 24
+    ws.column_dimensions["D"].width = 20
+
+    es = cm.entropy_synchronization or {}
+
+    # Properties section
+    props = [
+        ("Convergence Method", "Bellman-Picard" if es.get("wasRecursive") else "Direct"),
+        ("Was Recursive", str(es.get("wasRecursive", False))),
+        ("Convergence Iterations", es.get("convergenceIterations", "N/A")),
+        ("Convergence Residual", es.get("convergenceResidual", "N/A")),
+        ("Amplification Factor", es.get("amplificationFactor", "N/A")),
+        ("Max Iterations (config)", es.get("maxIterations", "N/A")),
+        ("Epsilon (config)", es.get("epsilon", "N/A")),
+        ("Damping (config)", es.get("damping", "N/A")),
+        ("Participating Functions", es.get("participatingFunctions", "N/A")),
+    ]
+
+    ws.cell(row=3, column=1, value="Property")
+    ws.cell(row=3, column=2, value="Value")
+    _style_header_row(ws, 3, 2)
+
+    for i, (prop, val) in enumerate(props, start=4):
+        ws.cell(row=i, column=1, value=prop)
+        ws.cell(row=i, column=2, value=val)
+        for c in [1, 2]:
+            _style_data_cell(ws, i, c)
+
+    # Amplification analysis
+    amp_row = 4 + len(props) + 1
+    ws.cell(row=amp_row, column=1, value="Amplification Analysis")
+    _style_subheader_row(ws, amp_row, 4)
+
+    amp = es.get("amplificationFactor", 1.0)
+    if isinstance(amp, (int, float)):
+        ws.cell(row=amp_row + 1, column=1, value="Amplification Factor")
+        ws.cell(row=amp_row + 1, column=2, value=amp)
+        _style_data_cell(ws, amp_row + 1, 2)
+
+        ws.cell(row=amp_row + 2, column=1, value="Interpretation")
+        if amp > 1.1:
+            interp = "Significant amplification — network effects increase entropy"
+        elif amp > 1.0:
+            interp = "Minor amplification — small network effect"
+        elif amp == 1.0:
+            interp = "No amplification — entropy is self-consistent"
+        else:
+            interp = "Dampening — network effects reduce entropy"
+        ws.cell(row=amp_row + 2, column=2, value=interp)
+        _style_data_cell(ws, amp_row + 2, 2)
+
+    # Description
+    desc = es.get("description", "")
+    if desc:
+        desc_row = amp_row + 4
+        ws.cell(row=desc_row, column=1, value="FlowFRAM Description")
+        ws.cell(row=desc_row, column=1).font = Font(bold=True)
+        ws.cell(row=desc_row + 1, column=1, value=desc)
+
+
+def _build_rei_nonlinear_sheet(wb: Workbook, cm: ComplexityMetricsExport):
+    """
+    Sheet 10: REI Non-Linear Composition.
+
+    Shows FOV, FRC, ES linear values and their pairwise interaction terms.
+    FORMULA: NL-REI = linear + interactions
+    """
+    ws = wb.create_sheet("REI Non-Linear")
+
+    ws.cell(row=1, column=1, value="REI Non-Linear Composition — Factor Interaction Analysis")
+    _style_subheader_row(ws, 1, 4)
+
+    ws.column_dimensions["A"].width = 28
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 20
+    ws.column_dimensions["D"].width = 20
+
+    rc = cm.rei_composition or {}
+    factor_vals = rc.get("factorValues", {})
+    interactions = rc.get("interactionTerms", {})
+
+    # Factor values section
+    ws.cell(row=3, column=1, value="Factor")
+    ws.cell(row=3, column=2, value="Value")
+    _style_header_row(ws, 3, 2)
+
+    factor_data = [
+        ("FOV (Function Output Variability)", factor_vals.get("FOV", 0)),
+        ("FRC (Functional Resonance Coupling)", factor_vals.get("FRC", 0)),
+        ("ES (Entropy Synchronization)", factor_vals.get("ES", 0)),
+    ]
+    for i, (name, val) in enumerate(factor_data, start=4):
+        ws.cell(row=i, column=1, value=name)
+        ws.cell(row=i, column=2, value=val)
+        _style_data_cell(ws, i, 1)
+        _style_data_cell(ws, i, 2)
+
+    # Linear REI
+    lin_row = 4 + len(factor_data) + 1
+    ws.cell(row=lin_row, column=1, value="Linear REI")
+    ws.cell(row=lin_row, column=1).font = Font(bold=True)
+    ws.cell(row=lin_row, column=2, value=rc.get("linearREI", cm.rei))
+    _style_data_cell(ws, lin_row, 2)
+
+    # FORMULA: Sum factors to verify
+    ws.cell(row=lin_row, column=3, value="=B4+B5+B6")
+    ws.cell(row=lin_row, column=3).font = MONO_FONT
+    _style_data_cell(ws, lin_row, 3, is_formula=True)
+
+    # Interaction terms section
+    int_row = lin_row + 2
+    ws.cell(row=int_row, column=1, value="Interaction Terms")
+    _style_subheader_row(ws, int_row, 4)
+
+    ws.cell(row=int_row + 1, column=1, value="Term")
+    ws.cell(row=int_row + 1, column=2, value="Value")
+    ws.cell(row=int_row + 1, column=3, value="Formula Check")
+    _style_header_row(ws, int_row + 1, 3)
+
+    int_data = [
+        ("FOV × FRC", interactions.get("FOV_x_FRC", 0), "=B4*B5"),
+        ("FOV × ES", interactions.get("FOV_x_ES", 0), "=B4*B6"),
+        ("FRC × ES", interactions.get("FRC_x_ES", 0), "=B5*B6"),
+    ]
+    for i, (name, val, formula) in enumerate(int_data, start=int_row + 2):
+        ws.cell(row=i, column=1, value=name)
+        ws.cell(row=i, column=2, value=val)
+        _style_data_cell(ws, i, 1)
+        _style_data_cell(ws, i, 2)
+        ws.cell(row=i, column=3, value=formula)
+        _style_data_cell(ws, i, 3, is_formula=True)
+
+    total_int_row = int_row + 2 + len(int_data)
+    ws.cell(row=total_int_row, column=1, value="Total Interactions")
+    ws.cell(row=total_int_row, column=1).font = Font(bold=True)
+    ws.cell(row=total_int_row, column=2, value=interactions.get("total", 0))
+    _style_data_cell(ws, total_int_row, 2)
+
+    first_int = int_row + 2
+    last_int = first_int + len(int_data) - 1
+    ws.cell(row=total_int_row, column=3,
+            value=f"=SUM(B{first_int}:B{last_int})")
+    _style_data_cell(ws, total_int_row, 3, is_formula=True)
+
+    # Non-linear REI
+    nl_row = total_int_row + 2
+    ws.cell(row=nl_row, column=1, value="Non-Linear REI")
+    ws.cell(row=nl_row, column=1).font = Font(bold=True, size=12)
+    ws.cell(row=nl_row, column=2, value=rc.get("nonLinearREI", cm.rei))
+    _style_result_cell(ws, nl_row, 2)
+
+    # FORMULA: NL-REI = Linear + Interactions
+    ws.cell(row=nl_row, column=3,
+            value=f"=B{lin_row}+B{total_int_row}")
+    _style_data_cell(ws, nl_row, 3, is_formula=True)
+    _style_result_cell(ws, nl_row, 3)
+
+    # Interaction percentage
+    ws.cell(row=nl_row + 1, column=1, value="Interaction % of Total")
+    ws.cell(row=nl_row + 1, column=2, value=rc.get("interactionPercent", 0))
+    ws.cell(row=nl_row + 1, column=2).number_format = NUMBER_FMT_4
+    _style_data_cell(ws, nl_row + 1, 2)
+
+    # FORMULA: Interaction % = total_int / NL-REI
+    ws.cell(row=nl_row + 1, column=3,
+            value=f"=IF(B{nl_row}=0,0,B{total_int_row}/B{nl_row}*100)")
+    ws.cell(row=nl_row + 1, column=3).number_format = NUMBER_FMT_4
+    _style_data_cell(ws, nl_row + 1, 3, is_formula=True)
+
+    # Cross-check with FlowFRAM
+    chk_row = nl_row + 3
+    ws.cell(row=chk_row, column=1, value="FlowFRAM NL-REI (reference)")
+    ws.cell(row=chk_row, column=2, value=rc.get("nonLinearREI", cm.rei))
+    _style_data_cell(ws, chk_row, 2)
+    ws.cell(row=chk_row + 1, column=1, value="Spreadsheet NL-REI")
+    ws.cell(row=chk_row + 1, column=2, value=f"=C{nl_row}")
+    _style_data_cell(ws, chk_row + 1, 2, is_formula=True)
+    ws.cell(row=chk_row + 2, column=1, value="Match?")
+    ws.cell(row=chk_row + 2, column=2,
+            value=f'=IF(ABS(B{chk_row}-B{chk_row+1})<0.001,"✓ MATCH","✗ MISMATCH")')
+    _style_data_cell(ws, chk_row + 2, 2, is_formula=True)
+
+
+def _build_entropy_rate_sheet(wb: Workbook, cm: ComplexityMetricsExport):
+    """
+    Sheet 11: Entropy Rate — per-function convergence trends.
+
+    DATA: functionId, currentCV, previousCV
+    FORMULA: rate = currentCV - previousCV; trend classification
+    """
+    ws = wb.create_sheet("Entropy Rate")
+
+    ws.cell(row=1, column=1, value="Entropy Rate — Per-Function Convergence Trends")
+    _style_subheader_row(ws, 1, 7)
+
+    ws.column_dimensions["A"].width = 28
+    for c in range(2, 8):
+        ws.column_dimensions[get_column_letter(c)].width = 18
+
+    er = cm.entropy_rate or {}
+    per_fn = er.get("perFunction", [])
+
+    # System summary
+    ws.cell(row=3, column=1, value="System Entropy Rate")
+    ws.cell(row=3, column=2, value=er.get("systemRate", 0))
+    ws.cell(row=3, column=1).font = Font(bold=True)
+    _style_data_cell(ws, 3, 2)
+
+    ws.cell(row=4, column=1, value="System Trend")
+    ws.cell(row=4, column=2, value=er.get("systemTrend", "N/A"))
+    _style_data_cell(ws, 4, 2)
+
+    trends = er.get("trends", {})
+    ws.cell(row=5, column=1, value="Trends Breakdown")
+    ws.cell(row=5, column=1).font = Font(bold=True)
+    ws.cell(row=5, column=2, value=f"↑ {trends.get('increasing', 0)}")
+    ws.cell(row=5, column=3, value=f"↓ {trends.get('decreasing', 0)}")
+    ws.cell(row=5, column=4, value=f"→ {trends.get('stable', 0)}")
+    ws.cell(row=5, column=5, value=f"NEW {trends.get('new', 0)}")
+
+    # Per-function table
+    ws.cell(row=7, column=1, value="Per-Function Details")
+    _style_subheader_row(ws, 7, 7)
+
+    headers = [
+        "Function ID", "Current CV", "Previous CV",
+        "Rate (formula)", "Trend", "|Rate| (formula)", "Converging? (formula)"
+    ]
+    for col, h in enumerate(headers, start=1):
+        ws.cell(row=8, column=col, value=h)
+    _style_header_row(ws, 8, len(headers))
+
+    row = 9
+    first = row
+    for fn in per_fn:
+        ws.cell(row=row, column=1, value=fn.get("functionId", ""))
+        ws.cell(row=row, column=2, value=fn.get("currentCV", 0))     # B: DATA
+        ws.cell(row=row, column=3, value=fn.get("previousCV", 0))    # C: DATA
+
+        # FORMULA: Rate = current - previous
+        ws.cell(row=row, column=4, value=f"=B{row}-C{row}")
+        _style_data_cell(ws, row, 4, is_formula=True)
+
+        ws.cell(row=row, column=5, value=fn.get("trend", ""))
+
+        # FORMULA: |Rate|
+        ws.cell(row=row, column=6, value=f"=ABS(D{row})")
+        _style_data_cell(ws, row, 6, is_formula=True)
+
+        # FORMULA: Converging if rate < 0 (CV decreasing)
+        ws.cell(row=row, column=7,
+                value=f'=IF(D{row}<-0.001,"✓ Converging",IF(D{row}>0.001,"⚠ Diverging","→ Stable"))')
+        _style_data_cell(ws, row, 7, is_formula=True)
+
+        for col in [1, 2, 3, 5]:
+            _style_data_cell(ws, row, col)
+
+        row += 1
+
+    # Summary formulas
+    last = row - 1
+    if last >= first:
+        ws.cell(row=row + 1, column=1, value="Avg |Rate|")
+        ws.cell(row=row + 1, column=1).font = Font(bold=True)
+        ws.cell(row=row + 1, column=6, value=f"=AVERAGE(F{first}:F{last})")
+        _style_result_cell(ws, row + 1, 6)
+
+        # FORMULA: Count converging
+        ws.cell(row=row + 2, column=1, value="Converging Count")
+        ws.cell(row=row + 2, column=7,
+                value=f'=COUNTIF(G{first}:G{last},"✓*")')
+        _style_data_cell(ws, row + 2, 7, is_formula=True)
+
+        ws.cell(row=row + 3, column=1, value="Diverging Count")
+        ws.cell(row=row + 3, column=7,
+                value=f'=COUNTIF(G{first}:G{last},"⚠*")')
+        _style_data_cell(ws, row + 3, 7, is_formula=True)
+
+        # Cross-check system rate
+        ws.cell(row=row + 5, column=1, value="FlowFRAM System Rate (ref)")
+        ws.cell(row=row + 5, column=4, value=er.get("systemRate", 0))
+        _style_data_cell(ws, row + 5, 4)
+
+        ws.cell(row=row + 6, column=1, value="Spreadsheet Avg Rate")
+        ws.cell(row=row + 6, column=4, value=f"=AVERAGE(D{first}:D{last})")
+        _style_data_cell(ws, row + 6, 4, is_formula=True)
+        _style_result_cell(ws, row + 6, 4)
+
+
+def _build_transfer_entropy_sheet(wb: Workbook, cm: ComplexityMetricsExport):
+    """
+    Sheet 12: Transfer Entropy — per-coupling causal analysis.
+
+    DATA: upstream, downstream, forward TE, reverse TE
+    FORMULA: net TE = forward - reverse; causal direction
+    """
+    ws = wb.create_sheet("Transfer Entropy")
+
+    ws.cell(row=1, column=1, value="Transfer Entropy — Causal Information Flow Analysis")
+    _style_subheader_row(ws, 1, 9)
+
+    ws.column_dimensions["A"].width = 24
+    ws.column_dimensions["B"].width = 24
+    ws.column_dimensions["C"].width = 10
+    for c in range(4, 10):
+        ws.column_dimensions[get_column_letter(c)].width = 18
+
+    te = cm.transfer_entropy or {}
+    couplings = te.get("couplings", [])
+    te_summary = te.get("summary", {})
+
+    headers = [
+        "Upstream", "Downstream", "Aspect", "Forward TE",
+        "Reverse TE", "Net TE (formula)", "Direction (formula)",
+        "Confidence", "|Net TE| (formula)"
+    ]
+    for col, h in enumerate(headers, start=1):
+        ws.cell(row=2, column=col, value=h)
+    _style_header_row(ws, 2, len(headers))
+
+    row = 3
+    first = row
+    for c in couplings:
+        ws.cell(row=row, column=1, value=c.get("upstream", ""))
+        ws.cell(row=row, column=2, value=c.get("downstream", ""))
+        ws.cell(row=row, column=3, value=c.get("aspect", ""))
+        ws.cell(row=row, column=4, value=c.get("forward", 0))          # DATA
+        ws.cell(row=row, column=5, value=c.get("reverse", 0))          # DATA
+
+        # FORMULA: Net TE = Forward - Reverse
+        ws.cell(row=row, column=6, value=f"=D{row}-E{row}")
+        _style_data_cell(ws, row, 6, is_formula=True)
+
+        # FORMULA: Direction
+        ws.cell(row=row, column=7,
+                value=f'=IF(ABS(F{row})<0.01,"symmetric",IF(F{row}>0,"confirmed","reversed"))')
+        _style_data_cell(ws, row, 7, is_formula=True)
+
+        ws.cell(row=row, column=8, value=c.get("confidence", ""))
+
+        # FORMULA: |Net TE|
+        ws.cell(row=row, column=9, value=f"=ABS(F{row})")
+        _style_data_cell(ws, row, 9, is_formula=True)
+
+        for col in [1, 2, 3, 4, 5, 8]:
+            _style_data_cell(ws, row, col)
+
+        row += 1
+
+    # Summary section
+    last = row - 1
+    sum_row = row + 1
+    ws.cell(row=sum_row, column=1, value="SUMMARY")
+    ws.cell(row=sum_row, column=1).font = Font(bold=True, size=12)
+
+    if last >= first:
+        ws.cell(row=sum_row + 1, column=1, value="Total Couplings")
+        ws.cell(row=sum_row + 1, column=4, value=f"=COUNTA(D{first}:D{last})")
+        _style_data_cell(ws, sum_row + 1, 4, is_formula=True)
+
+        ws.cell(row=sum_row + 2, column=1, value="Avg Forward TE")
+        ws.cell(row=sum_row + 2, column=4, value=f"=AVERAGE(D{first}:D{last})")
+        _style_data_cell(ws, sum_row + 2, 4, is_formula=True)
+
+        ws.cell(row=sum_row + 3, column=1, value="Avg Reverse TE")
+        ws.cell(row=sum_row + 3, column=5, value=f"=AVERAGE(E{first}:E{last})")
+        _style_data_cell(ws, sum_row + 3, 5, is_formula=True)
+
+        ws.cell(row=sum_row + 4, column=1, value="Avg Net TE")
+        ws.cell(row=sum_row + 4, column=6, value=f"=AVERAGE(F{first}:F{last})")
+        _style_data_cell(ws, sum_row + 4, 6, is_formula=True)
+        _style_result_cell(ws, sum_row + 4, 6)
+
+        # Causal direction counts
+        ws.cell(row=sum_row + 5, column=1, value="Causal Confirmed")
+        ws.cell(row=sum_row + 5, column=7,
+                value=f'=COUNTIF(G{first}:G{last},"confirmed")')
+        _style_data_cell(ws, sum_row + 5, 7, is_formula=True)
+
+        ws.cell(row=sum_row + 6, column=1, value="Causal Reversed")
+        ws.cell(row=sum_row + 6, column=7,
+                value=f'=COUNTIF(G{first}:G{last},"reversed")')
+        _style_data_cell(ws, sum_row + 6, 7, is_formula=True)
+
+        ws.cell(row=sum_row + 7, column=1, value="Symmetric")
+        ws.cell(row=sum_row + 7, column=7,
+                value=f'=COUNTIF(G{first}:G{last},"symmetric")')
+        _style_data_cell(ws, sum_row + 7, 7, is_formula=True)
+
+    # Cross-check with FlowFRAM summary
+    chk_row = sum_row + 9
+    ws.cell(row=chk_row, column=1, value="FlowFRAM TE Summary (reference)")
+    ws.cell(row=chk_row, column=1).font = Font(bold=True)
+
+    ref_data = [
+        ("Total Couplings", te_summary.get("totalCouplings", 0)),
+        ("Causal Confirmed", te_summary.get("causalConfirmed", 0)),
+        ("Causal Reversed", te_summary.get("causalReversed", 0)),
+        ("Symmetric", te_summary.get("symmetric", 0)),
+        ("Avg Forward TE", te_summary.get("avgForwardTE", 0)),
+        ("Avg Reverse TE", te_summary.get("avgReverseTE", 0)),
+        ("Avg Net TE", te_summary.get("avgNetTE", 0)),
+        ("Confidence", te_summary.get("confidence", "N/A")),
+    ]
+    for i, (label, val) in enumerate(ref_data, start=chk_row + 1):
+        ws.cell(row=i, column=1, value=label)
+        ws.cell(row=i, column=2, value=val)
+        _style_data_cell(ws, i, 1)
+        _style_data_cell(ws, i, 2)
+
+
 def _build_variable_stats_sheet(
     wb: Workbook,
     stats: StatisticsExport,
 ):
     """
-    Sheet 8 (optional): Full variable statistics from statistics export.
+    Sheet 13 (optional): Full variable statistics from statistics export.
 
     DATA: All descriptive statistics per variable
     FORMULA: CV = std/mean, Range = max-min
@@ -814,6 +1322,17 @@ def generate_scenario_xlsx(
     _build_entropy_sheet(wb, cm)
     _build_chains_barriers_sheet(wb, cm)
     _build_itd_sheet(wb, cm)
+    _build_cri_sheet(wb, cm)
+
+    # Epistemological extension sheets (only when data available)
+    if cm.entropy_synchronization:
+        _build_entropy_sync_sheet(wb, cm)
+    if cm.rei_composition:
+        _build_rei_nonlinear_sheet(wb, cm)
+    if cm.entropy_rate:
+        _build_entropy_rate_sheet(wb, cm)
+    if cm.transfer_entropy:
+        _build_transfer_entropy_sheet(wb, cm)
 
     # Variable statistics sheet (only if stats export available)
     if stats and stats.variables:
