@@ -10,10 +10,10 @@ This repository contains the complete data, analysis scripts, and **formula-base
 
 | # | Experiment | Article | Functions | Edges | Scenarios | Method |
 |---|-----------|---------|-----------|-------|-----------|--------|
-| 1 | [Rees & Slater (2024)](rees-slater-2024/) | Boil Water Advisory | 10 | 9 | 9 | Stochastic + Deterministic |
-| 2 | [Patriarca et al. (2024)](patriarca-2024/) | Healthcare FRAM | 14 | 19 | 2 | Stochastic (Monte Carlo) |
-| 3 | [Qiao et al. (2022)](qiao-2022/) | Maritime Emergency | 25 | 50 | 10 | Stochastic (Monte Carlo) |
-| 4 | [Slim & Nadeau (2019)](slim-nadeau-2019/) | Aircraft Deicing | 17 | 35 | 6 | Deterministic (Fuzzy Logic) |
+| 1 | [Rees & Slater (2024)](rees-slater-2024/) | Boil Water Advisory | 10 | 9 | 9 | FMV Metadata (Deterministic + Stochastic) |
+| 2 | [Patriarca et al. (2024)](patriarca-2024/) | Healthcare FRAM | 14 | 19 | 2 | Stochastic (Functional Random Walk) |
+| 3 | [Qiao et al. (2022)](qiao-2022/) | Maritime Emergency | 25 | 50 | 10 | FRAM-BN-CN (Bayesian Network + Complex Network) |
+| 4 | [Slim & Nadeau (2019)](slim-nadeau-2019/) | Aircraft Deicing | 17 | 35 | 6 | Deterministic (Fuzzy Logic — Mamdani FIS) |
 
 **Total: 66 functions, 113 edges, 27 scenarios**
 
