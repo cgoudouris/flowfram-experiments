@@ -1,0 +1,457 @@
+{
+  "metadata": {
+    "exportDate": "2026-03-09T18:44:56.664Z",
+    "iteration": 500,
+    "totalIterations": 500
+  },
+  "summary": {
+    "rei": 0.6424983264669044,
+    "reiPercentage": 64.24983264669044,
+    "status": "WARNING",
+    "thresholds": {
+      "warning": 0.6,
+      "critical": 0.8
+    }
+  },
+  "factors": [
+    {
+      "name": "Coupling Network Entropy",
+      "value": 1,
+      "contribution": 0.15,
+      "category": "static"
+    },
+    {
+      "name": "Temporal Consistency",
+      "value": 1,
+      "contribution": 0.15,
+      "category": "static"
+    },
+    {
+      "name": "System Activity Entropy",
+      "value": 0.8756044340753463,
+      "contribution": 0.13134066511130194,
+      "category": "static"
+    },
+    {
+      "name": "Aspect Entropy",
+      "value": 0.6812338851926886,
+      "contribution": 0.10218508277890329,
+      "category": "static"
+    },
+    {
+      "name": "Functional Resonance",
+      "value": 1.000000000000001,
+      "contribution": 0.10000000000000012,
+      "category": "dynamic"
+    },
+    {
+      "name": "Entropy Synchronization",
+      "value": 0.028646872264773544,
+      "contribution": 0.004297030839716031,
+      "category": "dynamic"
+    },
+    {
+      "name": "Output Variability",
+      "value": 0.01610071185971762,
+      "contribution": 0.002415106778957643,
+      "category": "dynamic"
+    }
+  ],
+  "functionVariabilities": [
+    {
+      "functionId": "to control the heating time",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 300,
+      "precisionPhenotype": "low",
+      "variabilityLevel": "low"
+    },
+    {
+      "functionId": "to boil water",
+      "cv": 0.004172756229389314,
+      "cvPercentage": 0.4172756229389314,
+      "mean": 498.4015492778755,
+      "precisionPhenotype": "low",
+      "variabilityLevel": "low"
+    },
+    {
+      "functionId": "to set the target temperature",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 100,
+      "precisionPhenotype": "low",
+      "variabilityLevel": "low"
+    },
+    {
+      "functionId": "to control the time it is allowed to stew",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 3,
+      "precisionPhenotype": "low",
+      "variabilityLevel": "low"
+    },
+    {
+      "functionId": "to pour onto tea leaves",
+      "cv": 0.109449400102761,
+      "cvPercentage": 10.944940010276099,
+      "mean": 47.50387319468911,
+      "precisionPhenotype": "low",
+      "variabilityLevel": "low"
+    },
+    {
+      "functionId": "to fill with a quantity of water",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 1000,
+      "precisionPhenotype": "low",
+      "variabilityLevel": "low"
+    },
+    {
+      "functionId": "to supply kettle",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 1000,
+      "precisionPhenotype": "low",
+      "variabilityLevel": "low"
+    }
+  ],
+  "resonanceDetections": [
+    {
+      "upstream": "to boil water",
+      "downstream": "to pour onto tea leaves",
+      "aspect": "input",
+      "correlation": 1.000000000000001,
+      "nmi": 1,
+      "combinedScore": 1.000000000000001,
+      "transferEntropy": 0,
+      "transferEntropyReverse": 0,
+      "netTransferEntropy": 0,
+      "teConfidence": "high",
+      "type": "amplifying"
+    }
+  ],
+  "vpi": {
+    "value": 1,
+    "type": "neutral",
+    "description": "Insufficient boundary functions (upstream=7, downstream=1)",
+    "upstreamCount": 7,
+    "downstreamCount": 1
+  },
+  "resonanceChains": [
+    {
+      "path": [
+        "to boil water",
+        "to pour onto tea leaves"
+      ],
+      "correlations": [
+        1.000000000000001
+      ],
+      "strength": 1.000000000000001,
+      "type": "amplifying",
+      "display": "to boil water → to pour onto tea leaves (100.0% propagation)"
+    }
+  ],
+  "barrierFunctions": [
+    {
+      "functionId": "to pour onto tea leaves",
+      "incomingCorrelation": 1.000000000000001,
+      "outgoingCorrelation": 0,
+      "cv": 0.109449400102761,
+      "dampingRatio": 10.00000000000001,
+      "effectiveness": "moderate"
+    }
+  ],
+  "aspectVariabilities": [
+    {
+      "aspect": "input",
+      "fullName": "input",
+      "cv": 0.004970603414533085,
+      "cvPercentage": 0.49706034145330846,
+      "mean": 697.335915463126,
+      "count": 1500,
+      "variabilityLevel": "low"
+    },
+    {
+      "aspect": "time",
+      "fullName": "time",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 151.5,
+      "count": 1000,
+      "variabilityLevel": "low"
+    },
+    {
+      "aspect": "control",
+      "fullName": "control",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 100,
+      "count": 500,
+      "variabilityLevel": "low"
+    },
+    {
+      "aspect": "resource",
+      "fullName": "resource",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 1000,
+      "count": 500,
+      "variabilityLevel": "low"
+    }
+  ],
+  "variableVariabilities": [
+    {
+      "name": "TEMP_START_C",
+      "cv": 0.5120913899577426,
+      "cvPercentage": 51.20913899577426,
+      "mean": 20.306025548078022,
+      "minValue": -5.8459680635497975,
+      "maxValue": 45.77539176362814,
+      "range": 51.62135982717794,
+      "functions": [
+        "to fill with a quantity of water"
+      ],
+      "aspects": [
+        "input"
+      ],
+      "variabilityLevel": "high"
+    },
+    {
+      "name": "TEMPERATURE",
+      "cv": 0.11301810179575442,
+      "cvPercentage": 11.301810179575442,
+      "mean": 92.00774638937823,
+      "minValue": 65.85575277775038,
+      "maxValue": 117.47711260492832,
+      "range": 51.62135982717794,
+      "functions": [
+        "to boil water"
+      ],
+      "aspects": [
+        "input"
+      ],
+      "variabilityLevel": "low"
+    },
+    {
+      "name": "Capacity_J_gC",
+      "cv": 3.8210352663963464e-15,
+      "cvPercentage": 3.8210352663963467e-13,
+      "mean": 4.183999999999984,
+      "minValue": 4.184,
+      "maxValue": 4.184,
+      "range": 0,
+      "functions": [
+        "to fill with a quantity of water"
+      ],
+      "aspects": [
+        "input"
+      ],
+      "variabilityLevel": "low"
+    },
+    {
+      "name": "TIME_s",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 300,
+      "minValue": 300,
+      "maxValue": 300,
+      "range": 0,
+      "functions": [
+        "to control the heating time"
+      ],
+      "aspects": [
+        "time"
+      ],
+      "variabilityLevel": "low"
+    },
+    {
+      "name": "TARGET_TEMP_C",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 100,
+      "minValue": 100,
+      "maxValue": 100,
+      "range": 0,
+      "functions": [
+        "to set the target temperature"
+      ],
+      "aspects": [
+        "control"
+      ],
+      "variabilityLevel": "low"
+    },
+    {
+      "name": "STEWING_TIME_min",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 3,
+      "minValue": 3,
+      "maxValue": 3,
+      "range": 0,
+      "functions": [
+        "to control the time it is allowed to stew"
+      ],
+      "aspects": [
+        "time"
+      ],
+      "variabilityLevel": "low"
+    },
+    {
+      "name": "QUANTITY_g",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 1000,
+      "minValue": 1000,
+      "maxValue": 1000,
+      "range": 0,
+      "functions": [
+        "to fill with a quantity of water"
+      ],
+      "aspects": [
+        "input"
+      ],
+      "variabilityLevel": "low"
+    },
+    {
+      "name": "POWER_W",
+      "cv": 0,
+      "cvPercentage": 0,
+      "mean": 1000,
+      "minValue": 1000,
+      "maxValue": 1000,
+      "range": 0,
+      "functions": [
+        "to supply kettle"
+      ],
+      "aspects": [
+        "resource"
+      ],
+      "variabilityLevel": "low"
+    }
+  ],
+  "history": [
+    0.6424983264669044
+  ],
+  "stats": {
+    "totalMessages": 9500,
+    "uniqueFunctions": 10,
+    "uniqueConnections": 10,
+    "iterations": 500,
+    "feedbackLoop": false
+  },
+  "entropySynchronization": {
+    "wasRecursive": true,
+    "convergenceIterations": 7,
+    "convergenceResidual": 6.018441957994503e-7,
+    "amplificationFactor": 1.008495990202139,
+    "maxIterations": 20,
+    "epsilon": 0.000001,
+    "damping": 0.7,
+    "participatingFunctions": 2,
+    "description": "Iterative BP converged in 7 iterations (residual=6.0e-7). Network amplification: 1.01×"
+  },
+  "reiComposition": {
+    "linearREI": 0.640237885508879,
+    "interactionTerms": {
+      "FOV_x_FRC": 0.0008050355929858819,
+      "FOV_x_ES": 0.00002306175180086276,
+      "FRC_x_ES": 0.0014323436132386788,
+      "total": 0.0022604409580254236
+    },
+    "factorValues": {
+      "FOV": 0.01610071185971762,
+      "FRC": 1.000000000000001,
+      "ES": 0.028646872264773544
+    },
+    "nonLinearREI": 0.6424983264669044,
+    "interactionPercent": 0.3530626676721516,
+    "description": "Non-linear interaction adds 0.23% to REI (0.4% above linear). Dominant: FRC×ES (synchronized instability)"
+  },
+  "entropyRate": {
+    "systemRate": 0,
+    "systemTrend": "stable",
+    "trends": {
+      "increasing": 0,
+      "decreasing": 0,
+      "stable": 0,
+      "new": 7
+    },
+    "perFunction": [
+      {
+        "functionId": "to control the heating time",
+        "currentCV": 0,
+        "previousCV": 0,
+        "rate": 0,
+        "trend": "new"
+      },
+      {
+        "functionId": "to boil water",
+        "currentCV": 0.004172756229389314,
+        "previousCV": 0,
+        "rate": 0,
+        "trend": "new"
+      },
+      {
+        "functionId": "to set the target temperature",
+        "currentCV": 0,
+        "previousCV": 0,
+        "rate": 0,
+        "trend": "new"
+      },
+      {
+        "functionId": "to control the time it is allowed to stew",
+        "currentCV": 0,
+        "previousCV": 0,
+        "rate": 0,
+        "trend": "new"
+      },
+      {
+        "functionId": "to pour onto tea leaves",
+        "currentCV": 0.109449400102761,
+        "previousCV": 0,
+        "rate": 0,
+        "trend": "new"
+      },
+      {
+        "functionId": "to fill with a quantity of water",
+        "currentCV": 0,
+        "previousCV": 0,
+        "rate": 0,
+        "trend": "new"
+      },
+      {
+        "functionId": "to supply kettle",
+        "currentCV": 0,
+        "previousCV": 0,
+        "rate": 0,
+        "trend": "new"
+      }
+    ],
+    "description": "First observation — no temporal history available yet."
+  },
+  "transferEntropy": {
+    "couplings": [
+      {
+        "upstream": "to boil water",
+        "downstream": "to pour onto tea leaves",
+        "aspect": "input",
+        "forward": 0,
+        "reverse": 0,
+        "net": 0,
+        "causalDirection": "symmetric",
+        "confidence": "high"
+      }
+    ],
+    "summary": {
+      "totalCouplings": 1,
+      "causalConfirmed": 0,
+      "causalReversed": 0,
+      "symmetric": 1,
+      "avgForwardTE": 0,
+      "avgReverseTE": 0,
+      "avgNetTE": 0,
+      "confidence": "high"
+    },
+    "description": "Transfer Entropy analysis: 0/1 couplings show confirmed causal direction (upstream→downstream). Avg net TE = 0.000000 bits. Confidence: high."
+  }
+}
